@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -11,6 +11,7 @@ import {
   Dimensions,
   ScrollView,
 } from 'react-native';
+import axios from 'axios';
 import { images, colors } from './constant';
 import Entypo from 'react-native-vector-icons/Entypo';
 import AntDesign from 'react-native-vector-icons/AntDesign';
@@ -19,6 +20,7 @@ import { Avatar, Button, Card, Title, Paragraph } from 'react-native-paper';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import { FlatList } from 'react-native-gesture-handler';
 import LoginModal from './AuthModal';
+import { BASEURL, ENDPOINTS } from '../config/Config';
 
 const Header = () => {
   let navigation = useNavigation();
@@ -70,27 +72,28 @@ const imageSlider = [
   images.slider3,
   images.slider4,
 ];
-const Slider = () => {
+const Slider = (props) => {
+  const slider = props.slider
   let navigation = useNavigation();
   return (
     <View style={styles.container}>
       <SwiperFlatList
         autoplay
         autoplayDelay={3}
-        index={0}
+        // index={0}
         showPagination
         autoplayLoop
         disableGesture={true}
         autoplayLoopKeepAnimation={true}
         paginationActiveColor={colors.LIGHTGREY.DEFAULT}
         paginationDefaultColor={colors.TRANSPARENT}>
-        {imageSlider.map((item, key) => (
-          <View style={[styles.child]} key={key}>
-            <Image source={item} style={{ position: 'absolute', height: 190 }} />
+        {slider.map((item, key) => (
+          <View style={[styles.child]} key={item.slider_id}>
+            <Image source={{ uri: `https://thecodeditors.com/test/single_vendor/admin/slider_images/${item.slider_image}` }} style={{ position: 'absolute', height: 190, width: '100%' }} />
             <Text style={{ fontSize: 18, color: 'black', marginLeft: '5%' }}>
               New Arrivals
             </Text>
-            <Text style={styles.text}>This is my First Slider image</Text>
+            <Text style={styles.text}>{item.slider_title}</Text>
             <TouchableOpacity
               onPress={() => navigation.navigate('WishList')}
               style={{
@@ -110,10 +113,9 @@ const Slider = () => {
     </View>
   );
 };
-const Slider1 = () => {
+const Slider1 = (props) => {
   let navigation = useNavigation();
-  const colorss = ['tomato', 'thistle', 'skyblue', 'teal'];
-
+  const products = props.products;
   return (
     <View style={styles.container2}>
       {/* <SwiperFlatList
@@ -225,14 +227,20 @@ const Slider1 = () => {
         ))}
       </SwiperFlatList> */}
       <SwiperFlatList
-        disableGesture={false}
-        paginationActiveColor={colors.BLACK}
+        paginationActiveColor={'brown'}
         paginationDefaultColor={colors.LIGHTGREY.DEFAULT}
-        autoplayDelay={4}
-        // autoplayLoop
         index={0}
         showPagination
-        data={imageSlider}
+        paginationStyleItem={{
+          marginTop: 30
+        }}
+        paginationStyleItemActive={{
+          height: 10, width: 10, marginHorizontal: 6,
+        }}
+        paginationStyleItemInactive={{
+          height: 7, width: 7, marginHorizontal: 4,
+        }}
+        data={products}
         renderItem={({ item, key }) => (
           <View
             style={{
@@ -242,7 +250,8 @@ const Slider1 = () => {
               marginRight: 10,
               // backgroundColor: 'red'
             }}
-            key={key}>
+            key={item.pro_id}
+          >
             <AntDesign
               name="hearto"
               style={{
@@ -254,15 +263,15 @@ const Slider1 = () => {
               }}
               size={30}
             />
-            <Card.Cover source={images.trendingProduct} style={{ zIndex: 10, height: '55%', margin: '1%', borderRadius: 2 }} />
+            <Card.Cover source={{ uri: `https://thecodeditors.com/test/multi_vendor/admin/plugin/product_images/${item.image_name}` }} style={{ zIndex: 10, height: '55%', margin: '1%', borderRadius: 2 }} />
             <Card.Content>
               <Paragraph style={{ fontSize: 12, color: colors.LIGHTGREY.DEFAULT }}>
-                Heavy
-            </Paragraph>
-              <Paragraph>product number 8</Paragraph>
+                {item.pro_des}
+              </Paragraph>
+              <Paragraph>{item.pro_name}</Paragraph>
               <Paragraph style={{ fontSize: 14, color: colors.ORANGE.DEFAULT }}>
-                PKR 500
-          </Paragraph>
+                {item.pro_price}
+              </Paragraph>
             </Card.Content>
             <TouchableOpacity
               style={{
@@ -384,12 +393,45 @@ const SliderTrending = () => {
 };
 const App = () => {
   let navigation = useNavigation();
+  const [shops, setShops] = useState([])
+  const [products, setProducts] = useState([])
+  const [slider, setSlider] = useState([])
+  const [recommendation, setRecommendation] = useState([])
 
-  let renderItem = () => {
+  useEffect(async () => {
+
+    await axios.get(BASEURL + ENDPOINTS.SHOPNAME)
+      .then(res => {
+        const nameList = res.data.Data;
+        setShops(nameList);
+      })
+
+    await axios.get(BASEURL + ENDPOINTS.SLIDER_IMAGES)
+      .then(res => {
+        const proList = res.data.Data;
+        setSlider(proList);
+      })
+
+    await axios.get(BASEURL + ENDPOINTS.RECENT_PRODUCTS)
+      .then(res => {
+        const proList = res.data.Data;
+        setProducts(proList);
+      })
+
+    await axios.get(BASEURL + ENDPOINTS.BESTSELLER)
+      .then(res => {
+        const proList = res.data.Data;
+        setRecommendation(proList);
+      })
+
+  }, []);
+
+  let renderItem = (item) => {
     // let navigation = useNavigation();
+
     return (
 
-      <Card style={{ width: '48%', margin: '1%', padding: '0.8%', borderRadius: 2 }}>
+      <Card key={item.item.pro_id} style={{ width: '48%', margin: '1%', padding: '0.8%', borderRadius: 2 }}>
         <AntDesign
           name="hearto"
           style={{
@@ -400,14 +442,14 @@ const App = () => {
           }}
           size={30}
         />
-        <Card.Cover source={images.trendingProduct} style={{}} />
+        <Card.Cover source={{ uri: `https://thecodeditors.com/test/multi_vendor/admin/plugin/product_images/${item.item.image_name}` }} style={{}} />
         <Card.Content>
           <Paragraph style={{ fontSize: 12, color: colors.LIGHTGREY.DEFAULT }}>
-            Heavy
+            {item.item.pro_des}
           </Paragraph>
-          <Paragraph>product number 8</Paragraph>
+          <Paragraph>{item.item.pro_name}</Paragraph>
           <Paragraph style={{ fontSize: 14, color: colors.ORANGE.DEFAULT }}>
-            PKR 500
+            {item.item.pro_price}
           </Paragraph>
         </Card.Content>
         <TouchableOpacity
@@ -438,167 +480,56 @@ const App = () => {
       <LoginModal />
       <View style={{ height: '100%', backgroundColor: 'white' }}>
         <Header />
-        <ScrollView style={{ height: 300 }}>
-          <Slider />
-          <Text style={{ fontSize: 20, fontWeight: 'bold', padding: 10 }}>
-            Shops
-          </Text>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}>
-            {[1, 2, 3].map((item, key) => (
-              <React.Fragment key={key}>
-                <Image
-                  source={images.logoAsiaTv}
-                  style={{ height: 30, width: 40 }}
-                />
-                <Text style={{ color: colors.ORANGE.DEFAULT, fontSize: 14 }}>
-                  HushPuppy
-                </Text>
-              </React.Fragment>
-            ))}
-          </View>
 
-          <Text style={{ fontSize: 22, fontWeight: 'bold', padding: 10 }}>
-            Trending Today
-          </Text>
-          <Slider1 />
+        <FlatList
+          ListHeaderComponent={
+            <>
+              <Slider slider={slider} />
+              <Text style={{ fontSize: 20, fontWeight: 'bold', padding: 10 }}>
+                Shops
+              </Text>
+              <ScrollView
+                showsHorizontalScrollIndicator={false}
+                horizontal
+                style={{
+                  flexDirection: 'row',
+                  // justifyContent: 'space-between',
+                  // alignItems: 'center',
+                }}>
+                {shops.map((item, key) => (
+                  <React.Fragment key={key}>
+                    <Image
+                      source={images.logoAsiaTv}
+                      style={{ height: 30, width: 40 }}
+                    />
+                    <Text style={{ color: colors.ORANGE.DEFAULT, fontSize: 14 }}>
+                      {item.vendor_company_name}
+                    </Text>
+                  </React.Fragment>
+                ))}
+              </ScrollView>
 
-          <View
-            style={{
-              width: '100%',
-              height: '100%',
-              marginTop: '2%',
-              flex: 1,
-            }}>
-            <Text style={{ fontSize: 22, fontWeight: 'bold', padding: 10 }}>
-              Electronic
+              <Text style={{ fontSize: 22, fontWeight: 'bold', padding: 10 }}>
+                Trending Today
+              </Text>
+              <Slider1 products={recommendation} />
+
+              <Text style={{ fontSize: 22, fontWeight: 'bold', padding: 10, marginTop: '5%' }}>
+                Electronic
             </Text>
-            <FlatList
-              showsVerticalScrollIndicator={false}
-              data={[1, 2, 3, 4, 5, 6, 7, 8]}
-              keyExtractor={({ _, i }) => String(i)}
-              renderItem={renderItem}
-              numColumns={2}
-            />
-          </View>
-        </ScrollView>
+            </>
+
+          }
+          showsVerticalScrollIndicator={false}
+          data={products}
+          keyExtractor={(key) => key.pro_id}
+          renderItem={(item) => renderItem(item)}
+          numColumns={2}
+        />
       </View>
     </>
   );
 };
-// const App = () => {
-//   let navigation = useNavigation();
-
-//   let renderItem = () => {
-//     return (
-//       <Card
-//         style={{marginRight: '2%', width: '49%', height: 230, marginTop: 10}}>
-//         <AntDesign
-//           name="hearto"
-//           style={{
-//             position: 'absolute',
-//             zIndex: 12,
-//             right: 10,
-//             top: 10,
-//             color: colors.LIGHTGREY.DEFAULT,
-//           }}
-//           size={30}
-//         />
-//         <Card.Cover source={images.trendingProduct} style={{height: '55%'}} />
-//         <Card.Content>
-//           <Paragraph style={{fontSize: 12, color: colors.LIGHTGREY.DEFAULT}}>
-//             Heavy
-//           </Paragraph>
-//           <Paragraph>product number 8</Paragraph>
-//           <Paragraph style={{fontSize: 14, color: colors.ORANGE.DEFAULT}}>
-//             PKR 500
-//           </Paragraph>
-//         </Card.Content>
-//         <TouchableOpacity
-//           style={{
-//             borderColor: colors.ORANGE.DEFAULT,
-//             width: '100%',
-//             borderWidth: 1,
-//             marginTop: 5,
-//           }}
-//           onPress={() => navigation.navigate('ProductDetail')}>
-//           <Text
-//             style={{
-//               fontSize: 18,
-//               color: colors.ORANGE.DEFAULT,
-//               textAlign: 'center',
-//             }}>
-//             Add
-//           </Text>
-//         </TouchableOpacity>
-//       </Card>
-//     );
-//   };
-//   return (
-//     <>
-//       <StatusBar barStyle="dark-content" />
-//       <LoginModal />
-//       <View style={{height: '100%', backgroundColor: 'white'}}>
-//         <Header />
-//         <ScrollView style={{height: 300}}>
-//           <Slider />
-//           <Text style={{fontSize: 20, fontWeight: 'bold', padding: 10}}>
-//             Shops
-//           </Text>
-//           <View
-//             style={{
-//               flexDirection: 'row',
-//               justifyContent: 'space-between',
-//               alignItems: 'center',
-//             }}>
-//             {[1, 2, 3].map((item, key) => (
-//               <React.Fragment key={key}>
-//                 <Image
-//                   source={images.logoAsiaTv}
-//                   style={{height: 30, width: 40}}
-//                 />
-//                 <Text style={{color: colors.ORANGE.DEFAULT, fontSize: 14}}>
-//                   HushPuppy
-//                 </Text>
-//               </React.Fragment>
-//             ))}
-//           </View>
-
-//           <Text style={{fontSize: 22, fontWeight: 'bold', padding: 10}}>
-//             Trending Today
-//           </Text>
-//           <Slider1 />
-
-//           <View
-//             style={{
-//               width: '96%',
-//               marginTop: '2%',
-//               // justifyContent: 'space-evenly',
-//               // alignItems: 'center',
-//               marginLeft: 'auto',
-//               marginRight: 'auto',
-//             }}>
-//             <Text style={{fontSize: 22, fontWeight: 'bold', padding: 10}}>
-//               Electronic
-//             </Text>
-//             <FlatList
-//               showsVerticalScrollIndicator={false}
-//               data={[1, 2, 3, 4, 5, 6, 7, 8]}
-//               keyExtractor={({_, i}) => String(i)}
-//               renderItem={renderItem}
-//               numColumns={2}
-//             />
-//           </View>
-//         </ScrollView>
-//       </View>
-//     </>
-//   );
-// };
-
 const { width, height } = Dimensions.get('window');
 const styles = StyleSheet.create({
   container: { height: 200, backgroundColor: 'white' },

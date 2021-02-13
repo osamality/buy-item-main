@@ -24,6 +24,7 @@ import {
   Picker,
   Icon,
 } from 'native-base';
+import axios from 'axios';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import { Avatar, Button, Card, Title, Paragraph } from 'react-native-paper';
 import { colors, images } from './constant';
@@ -32,6 +33,10 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import Feather from 'react-native-vector-icons/Feather';
 import EvilIcon from 'react-native-vector-icons/EvilIcons';
 import { FlatList } from 'react-native-gesture-handler';
+import { BASEURL, ENDPOINTS } from '../config/Config';
+
+
+
 
 const RenderHeader = () => {
   let navigation = useNavigation();
@@ -77,11 +82,11 @@ const RenderHeader = () => {
   );
 };
 
-let renderItem = () => {
+let renderItem = (item) => {
   // let navigation = useNavigation();
   return (
-          
-            <Card style={{ width: '48%', margin: '1%', padding:'0.8%', borderRadius: 2 }}>
+
+    <Card style={{ width: '48%', margin: '1%', padding: '0.8%', borderRadius: 2 }}>
       <AntDesign
         name="hearto"
         style={{
@@ -92,14 +97,14 @@ let renderItem = () => {
         }}
         size={30}
       />
-      <Card.Cover source={images.trendingProduct} style={{ }} />
+      <Card.Cover source={{ uri: `https://thecodeditors.com/test/multi_vendor/admin/plugin/product_images/${item.item.image_name}` }} style={{}} />
       <Card.Content>
         <Paragraph style={{ fontSize: 12, color: colors.LIGHTGREY.DEFAULT }}>
-          Heavy
+          {item.item.pro_des}
         </Paragraph>
-        <Paragraph>product number 8</Paragraph>
+        <Paragraph>{item.item.pro_name}</Paragraph>
         <Paragraph style={{ fontSize: 14, color: colors.ORANGE.DEFAULT }}>
-          PKR 500
+          {item.item.pro_price}
         </Paragraph>
       </Card.Content>
       <TouchableOpacity
@@ -126,6 +131,19 @@ let renderItem = () => {
 };
 
 let Login = () => {
+  const [products, setProducts] = useState([])
+
+  useEffect( async () => {
+
+   await axios.get(BASEURL + ENDPOINTS.RECENT_PRODUCTS)
+      .then(res => {
+        const proList = res.data.Data;
+        setProducts(proList);
+      })
+
+  }, []);
+
+
   return (
     <View
       style={{
@@ -157,7 +175,7 @@ let Login = () => {
           height: '100%',
           marginTop: '2%',
           alignItems: 'space-between',
-          flex:1,
+          flex: 1,
           // backgroundColor: 'red',
           // marginLeft: 'auto',
           // marginRight: 'auto',
@@ -165,9 +183,9 @@ let Login = () => {
       >
         <FlatList
           showsVerticalScrollIndicator={false}
-          data={[1, 2, 3, 4, 5, 6, 7, 8]}
-          keyExtractor={({ _, i }) => String(i)}
-          renderItem={renderItem}
+          data={products}
+          keyExtractor={(key) => key.pro_id}
+          renderItem={(item) => renderItem(item)}
           numColumns={2}
           contentContainerStyle={{
             justifyContent: 'center',
